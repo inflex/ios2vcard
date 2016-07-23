@@ -31,5 +31,9 @@ For Ubuntu developers, you'll need the following packages at a minium;
 
 3. Run it!
 
-	$ ./ios2vcard addresses.sqlite3 > addressbook.vcf
+- To place all addresses in to a single vcf file
+	$ ./ios2vcard -i addresses.sqlite3 > addressbook.vcf
+
+- To create individual vcf files
+	$ ./ios2vcard -i addresses.sqlite3 -s
 
