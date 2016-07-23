@@ -28,8 +28,6 @@ END:VCARD\r\n"
 		,num
 		);
 		i+=3;
-
-//		printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
 	}
 	return 0;
 }
