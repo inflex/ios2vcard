@@ -3,6 +3,8 @@
 #include <sqlite3.h>
 
 int splitfiles = 0, foc = 1;
+int obfusicate = 0;
+int reverse_names = 0;
 char *inputfile = NULL;
 
 /*-----------------------------------------------------------------\
@@ -25,7 +27,8 @@ Changes:
 
 \------------------------------------------------------------------*/
 static int callback(void *NotUsed, int argc, char **argv, char **azColName){
-	char *n="", *first, *last, *num, *title;
+	char *n="", *first, *last, *num, *title, *t;
+	char firsto[1024], lasto[1024], numo[1024];
 	char foname[1024];
 	FILE *fo;
 
@@ -33,6 +36,14 @@ static int callback(void *NotUsed, int argc, char **argv, char **azColName){
 	first = argv[1]?argv[1]:n;
 	last = argv[2]?argv[2]:n;
 	num = argv[3]?argv[3]:n;
+
+	if (obfusicate) {
+		char *p, *q;
+		p = first; q = firsto; while (*p++) { *q = *p +1; if (*p == ' ') *q = *p; q++; } *q = '\0';
+		p = last; q = lasto; while (*p++) { *q = *p +1;  if (*p == ' ') *q = *p; q++; } *q = '\0';
+		p = num; q = numo; while (*p++) { *q = *p +1; if (*p == ' ') *q = *p; if (*q > '9') *q = '3'; q++; } *q = '\0';
+	}
+
 
 	if (splitfiles) {
 		snprintf(foname,sizeof(foname),"%04d-%s_%s.vcf", foc, first, last);
@@ -45,16 +56,22 @@ static int callback(void *NotUsed, int argc, char **argv, char **azColName){
 		fo = stdout;
 	}
 
+	if (reverse_names) {
+		t = first;
+		first = last;
+		last = t;
+	}
+
 	foc++;
 	fprintf(fo,"BEGIN:VCARD\r\nVERSION:3.0\r\nN:%s;%s;;%s\r\nFN:%s %s\r\nTEL;TYPE=WORK,VOICE:%s\r\nEND:VCARD\r\n"
-			,first
-			,last
+			,obfusicate?firsto:first
+			,obfusicate?lasto:last
 			,title
 
-			,first
-			,last
+			,obfusicate?firsto:first
+			,obfusicate?lasto:last
 
-			,num
+			,obfusicate?numo:num
 		   );
 	if ((splitfiles)&&(fo)) fclose(fo);
 	return 0;
@@ -93,6 +110,14 @@ int parse_parameters( int argc, char **argv ) {
 						fprintf(stderr,"Insufficient parameters\n");
 						exit(1);
 					}
+					break;
+
+				case  'x':
+					obfusicate = 1;
+					break;
+
+				case 'r':
+					reverse_names = 1;
 					break;
 
 				case 's':
@@ -134,7 +159,12 @@ int main(int argc, char **argv){
 	int rc;
 
 	if( argc<=2 ){
-		fprintf(stderr, "Usage: %s -i <DATABASE> [ -s ]\n\t-s : Write each vCard to separate file\n", argv[0]);
+		fprintf(stderr, "Usage: %s -i <DATABASE> [ -s ] [ -x ][ -r ]\n"
+				"\t-s : Write each vCard to separate file\n"
+				"\t-x : obfusicate the data\n"
+				"\t-r : Reverse first/last name\n"
+				, argv[0]
+				);
 		return(1);
 	}
 
